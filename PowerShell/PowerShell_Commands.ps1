@@ -71,3 +71,6 @@ Test-NetConnection -ComputerName 192.168.1.1 -Port 443
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 Get-ExecutionPolicy -List
+
+# Force time sync
+W32tm /resync /force
