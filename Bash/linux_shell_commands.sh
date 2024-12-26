@@ -23,3 +23,7 @@ find / -name <STUFF_TO_FIND>
 
 # history :
 history -c && history -w
+
+# File system check:
+fsck
+e2fsck
