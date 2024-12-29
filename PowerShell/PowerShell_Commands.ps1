@@ -7,6 +7,8 @@ New-VirtualDisk -StoragePoolFriendlyName STORAGE_POOL_NAME `
                 -ProvisioningType Fixed -MediaType SSD
 
 Get-VirtualDisk
+Get-StoragePool -FriendlyName <STORAGE_POOL_NAME>
+Get-PhysicalDisk
 
 
 # Get PowerShell command history.
