@@ -1,5 +1,4 @@
 # Install winget:
-
 Find-PackageProvider -Name "NuGet" -AllVersions
 Install-PackageProvider -Name "NuGet" -RequiredVersion "2.8.5.216" -Force
 
@@ -78,3 +77,10 @@ Get-ExecutionPolicy -List
 
 # Force time sync
 W32tm /resync /force
+
+# Get FQDN hostname
+[System.Net.Dns]::GetHostByName($env:computerName)
+[System.Net.Dns]::GetHostByName($env:computerName).HostName
+
+# Restart remote computer
+Restart-Computer -ComputerName <Computer Name or IP> -Credential (Get-Credential) -Force
