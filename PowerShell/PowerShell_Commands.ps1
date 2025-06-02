@@ -84,3 +84,9 @@ W32tm /resync /force
 
 # Restart remote computer
 Restart-Computer -ComputerName <Computer Name or IP> -Credential (Get-Credential) -Force
+
+# WSL Configurations:
+wsl --help
+wsl --list --online
+wsl --install -d <Distribution Name>
+
