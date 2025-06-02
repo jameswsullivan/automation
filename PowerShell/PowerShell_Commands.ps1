@@ -90,3 +90,9 @@ wsl --help
 wsl --list --online
 wsl --install -d <Distribution Name>
 
+# Start the "Server (LanmanServer)" service for Docker Update to install.
+Set-Service -Name "LanmanServer" -StartupType Automatic
+Start-Service -Name "LanmanServer"
+
+
+
