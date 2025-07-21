@@ -1,3 +1,6 @@
+# Usage: python fetch-avalon-assets-by-collection.py <COLLECTION_ID>
+# e.g. python fetch-avalon-assets-by-collection.py abcd1234
+
 # Install python libraries as needed:
 # pip install ffmpeg-python
 # pip install requests
