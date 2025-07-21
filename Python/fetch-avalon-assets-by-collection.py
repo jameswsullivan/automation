@@ -1,3 +1,7 @@
+# Install python libraries as needed:
+# pip install ffmpeg-python
+# pip install requests
+
 import ffmpeg
 import requests
 import sys
