@@ -1,6 +1,8 @@
-# Install python libraries as needed:
-# pip install ffmpeg-python
-# pip install requests
+# Run this script in this format: python script_name.py <COLLECTION_ID>
+# e.g. python fetch-avalon-assets-by-collection-via-ssh.py abcd1234
+
+# Retrieve items from a collection using cURL:
+# curl -H "Avalon-Api-Key:<API_KEY>" "https://<AVALON_URL>/admin/collections/<COLLECTION_ID>/items.json"
 
 import paramiko
 import ffmpeg
@@ -10,27 +12,29 @@ import json
 import csv
 import os
 
-# cURL equivalent:
-# curl -H "Avalon-Api-Key:<API_KEY>" "https://<AVALON_URL>/admin/collections/<COLLECTION_ID>/items.json"
+# BEGIN - Script Setup:
+# Install python libraries as needed:
+# pip install ffmpeg-python
+# pip install requests
+# pip install paramiko
 
-# Add your API KEY:
+# Provide your Avalon API KEY:
 AVALON_API_KEY = r''
 
-# Add your avalon host URL: e.g. AVALON_HOST_URL = r'https://myavalon.com'
+# Provide your avalon host URL: e.g. AVALON_HOST_URL = r'https://myavalon.com'
 AVALON_HOST_URL = r''
 
-HEADERS = {
-    "Avalon-Api-Key":f"{AVALON_API_KEY}"
-}
-
-# SSH Connection Info:
+# Provide your SSH credentials and connection info:
 SSH_HOSTNAME = ''
 SSH_PORT = 22
 SSH_USERNAME = ''
 SSH_PASSWORD = ''
 
-# Avalon mount location:
+# Provide your Avalon asset mount location on the server:
 AVALON_MOUNT_PATH = ''
+
+# END - Script Setup.
+# -------------------
 
 # Define functions:
 def DownloadViaSSH(localPath, remotePath):
@@ -44,6 +48,9 @@ def DownloadViaSSH(localPath, remotePath):
         ssh.close()
 
 # Declare variables:
+HEADERS = {
+    "Avalon-Api-Key":f"{AVALON_API_KEY}"
+}
 COLLECTION_ID = ""
 COLLECTION_ITEMS_URL = ""
 COLLECTION_ITEMS_RESPONSE = ""
@@ -102,37 +109,52 @@ with open(f"{CSV_FILEPATH}", mode='a', newline='') as csvFile:
 print(f"\"{CSV_FILEPATH}\" created.")
 
 # Get medium or high quality files:
-fileItemQualityMedium = None
-fileItemQualityHigh = None
+selectedQuality = None
 
 for objectId, objectInfo in collectionItems.items():
-    print(f"object_id: {objectId}")
+
+    print(f"object_id: ")
     objectTitle = objectInfo["title"]
     fileId = objectInfo["files"][0]["id"]
 
-    for fileItem in objectInfo["files"][0]["files"]:
-        fileItemLabel = fileItem.get("label")
-        if fileItemLabel == "quality-medium":
-            fileItemQualityMedium = fileItem
-        elif fileItemLabel == "quality-high":
-            fileItemQualityHigh = fileItem
+    if objectInfo["files"][0]["files"]:
+        selectedQuality = objectInfo["files"][0]["files"][0]
+    else:
+        selectedQuality = None
+    
+    if (selectedQuality is not None) and (selectedQuality.get("label") != "quality-medium"):
+        for fileItem in objectInfo["files"][0]["files"]:
+            fileItemLabel = fileItem.get("label")
+            if fileItemLabel == "quality-medium":
+                selectedQuality = fileItem
+                break
+
+    selectedQualityLabel = selectedQuality.get("label")
 
     # Retrieve medium quality files:
-    if fileItemQualityMedium is not None:
-        print(f"Downloading {objectTitle}, please wait ...")
+    if selectedQuality is not None:
+        print(f"Downloading \"{objectTitle}\" in \"{selectedQualityLabel}\" quality ...")
 
-        file_uid = fileItemQualityMedium['id']
-        file_url = fileItemQualityMedium['url']
-        hls_url = fileItemQualityMedium['hls_url']
-        derivativeFile = fileItemQualityMedium['derivativeFile']
+        file_uid = selectedQuality['id']
+        file_url = selectedQuality['url']
+        hls_url = selectedQuality['hls_url']
+        derivativeFile = selectedQuality['derivativeFile']
+
+        if selectedQualityLabel == "quality-medium":
+            mediaQualitySuffix = "-medium"
+        elif selectedQualityLabel == "quality-high":
+            mediaQualitySuffix = "-high"
+        else:
+            mediaQualitySuffix = "-other"
 
         (mediaFileName, mediaFileExtension) = os.path.splitext(derivativeFile)
-        mediumQualityOutputFilepath = objectTitle + "-medium" + mediaFileExtension
-        mediumQualityOutputFilepath = os.path.join(COLLECTION_ID, mediumQualityOutputFilepath)
+
+        outputFilepath = objectTitle + mediaQualitySuffix + mediaFileExtension
+        outputFilepath = os.path.join(COLLECTION_ID, outputFilepath)
 
         objectRow = {'collection_id': COLLECTION_ID, 'object_id': objectId,
                      'object_title': objectTitle, 'file_id': fileId, 'file_uid': file_uid,
-                     'file_quality': 'quality-medium', 'hls_url': hls_url,
+                     'file_quality': selectedQualityLabel, 'hls_url': hls_url,
                      'derivativeFile': derivativeFile}
         
         with open(f"{CSV_FILEPATH}", mode='a', newline='') as csvFile:
@@ -149,41 +171,7 @@ for objectId, objectInfo in collectionItems.items():
 
         DownloadViaSSH(sshLocalFilePath, sshRemoteFileFullPath)
 
-        print(f"Finished downloading {objectTitle}.")
-
-    # Retireve high quality files:
-    elif fileItemQualityMedium is None:
-        print(f"Downloading {objectTitle}, please wait ...")
-
-        file_uid = fileItemQualityHigh['id']
-        file_url = fileItemQualityHigh['url']
-        hls_url = fileItemQualityHigh['hls_url']
-        derivativeFile = fileItemQualityHigh['derivativeFile']
-
-        (mediaFileName, mediaFileExtension) = os.path.splitext(derivativeFile)
-        highQualityOutputFilepath = objectTitle + "-high" + mediaFileExtension
-        highQualityOutputFilepath = os.path.join(COLLECTION_ID, highQualityOutputFilepath)
-
-        objectRow = {'collection_id': COLLECTION_ID, 'object_id': objectId,
-                     'object_title': objectTitle, 'file_id': fileId, 'file_uid': file_uid,
-                     'file_quality': 'quality-medium', 'hls_url': hls_url,
-                     'derivativeFile': derivativeFile}
-        
-        with open(f"{CSV_FILEPATH}", mode='a', newline='') as csvFile:
-            csvWriter = csv.DictWriter(csvFile, fieldnames=CSV_HEADERS)
-
-            if csvFile.tell() == 0:
-                csvWriter.writeheader()
-            
-            csvWriter.writerow(objectRow)
-
-        derivativeFileName = os.path.basename(derivativeFile)
-        sshLocalFilePath = COLLECTION_ID + "/" + derivativeFileName
-        sshRemoteFileFullPath = AVALON_MOUNT_PATH + "/masterfiles/" + file_url + mediaFileExtension
-
-        DownloadViaSSH(sshLocalFilePath, sshRemoteFileFullPath)
-
-        print(f"Finished downloading {objectTitle}.")
+        print(f"Finished downloading \"{objectTitle}\" in \"{selectedQualityLabel}\" quality.")
 
     else:
         print(f"No quality found.")
