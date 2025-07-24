@@ -113,7 +113,7 @@ selectedQuality = None
 
 for objectId, objectInfo in collectionItems.items():
 
-    print(f"object_id: ")
+    print(f"")
     objectTitle = objectInfo["title"]
     fileId = objectInfo["files"][0]["id"]
 
