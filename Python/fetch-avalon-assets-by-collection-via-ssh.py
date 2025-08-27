@@ -5,7 +5,6 @@
 # curl -H "Avalon-Api-Key:<API_KEY>" "https://<AVALON_URL>/admin/collections/<COLLECTION_ID>/items.json"
 
 import paramiko
-import ffmpeg
 import requests
 import sys
 import json
@@ -14,7 +13,6 @@ import os
 
 # BEGIN - Script Setup:
 # Install python libraries as needed:
-# pip install ffmpeg-python
 # pip install requests
 # pip install paramiko
 
