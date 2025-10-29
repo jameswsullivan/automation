@@ -94,5 +94,7 @@ wsl --install -d <Distribution Name>
 Set-Service -Name "LanmanServer" -StartupType Automatic
 Start-Service -Name "LanmanServer"
 
-
+# Install NTop and Nano.
+winget install GNU.Nano
+winget install gsass1.NTop
 
